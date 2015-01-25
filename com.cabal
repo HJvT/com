@@ -1,5 +1,5 @@
 Name: com
-version: 1.2.3.1
+version: 1.2.4
 Synopsis: Haskell COM support library
 Description: 
    Supporting for writing COM\/Automation clients in Haskell, and for
@@ -32,6 +32,7 @@ flag old-base
 
 library {
 if os(windows)
+ default-language: Haskell98
  Exposed-Modules: System.Win32.Com,
                  System.Win32.Com.Base,
                  System.Win32.Com.Automation,

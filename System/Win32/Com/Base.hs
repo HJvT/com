@@ -16,11 +16,12 @@ import Data.Int
 import Data.Word       ( Word32 )
 import System.IO.Unsafe ( unsafePerformIO )
 import System.Win32.Com.HDirect.WideString ( WideString, marshallWideString, freeWideString,
-		    readWideString, writeWideString )
+                    readWideString, writeWideString )
 import System.IO        ( hPutStrLn, stderr )
 
 import Control.Exception
-import Data.Typeable
+-- import Data.Typeable
+import Data.OldTypeable hiding ( Typeable, cast )
 #if BASE <=3
 import GHC.IOBase
 #endif

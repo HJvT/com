@@ -27,60 +27,60 @@
 -- 
 -----------------------------------------------------------------------------
 module System.Win32.Com.Server
-	(
-	  createComInstance  -- :: String
-	                     -- -> objState
-			     -- -> IO ()
-			     -- -> [ComInterface objState]
-			     -- -> IID iid
-			     -- -> IO (IUnknown iid)
+        (
+          createComInstance  -- :: String
+                             -- -> objState
+                             -- -> IO ()
+                             -- -> [ComInterface objState]
+                             -- -> IID iid
+                             -- -> IO (IUnknown iid)
 
         , createInstance     -- :: objState
-			     -- -> VTable iid objState
-			     -- -> IO (IUnknown iid)
-			  
-	, createVTable	    -- :: [Ptr ()] -> IO (VTable iid objState)
+                             -- -> VTable iid objState
+                             -- -> IO (IUnknown iid)
+                          
+        , createVTable      -- :: [Ptr ()] -> IO (VTable iid objState)
            -- prefixes the three IU methods.
-	, createComVTable   -- :: [Ptr ()] -> IO (ComVTable iid objState)
+        , createComVTable   -- :: [Ptr ()] -> IO (ComVTable iid objState)
 
-	, createIPointer  -- :: StablePtr a
-	                  -- -> (VTable b)
-			  -- -> IO (PrimIP b)
-	, cloneIPointer      -- :: IUnknown a -> VTable b -> IO (PrimIP b)
-	, cloneIPointer_prim -- :: PrimIP a -> VTable b -> IO (PrimIP b)
+        , createIPointer  -- :: StablePtr a
+                          -- -> (VTable b)
+                          -- -> IO (PrimIP b)
+        , cloneIPointer      -- :: IUnknown a -> VTable b -> IO (PrimIP b)
+        , cloneIPointer_prim -- :: PrimIP a -> VTable b -> IO (PrimIP b)
 
         , getObjState      -- :: PrimIP a -> IO b
         , getRealObjState  -- :: PrimIP a -> IO b
 
-	, createDualInterface -- :: [Ptr ()]
-		              -- -> IID iid
-		              -- -> Either LIBID String
-		              -- -> IUnknown a
-		              -- -> IO (IDispatch ())
+        , createDualInterface -- :: [Ptr ()]
+                              -- -> IID iid
+                              -- -> Either LIBID String
+                              -- -> IUnknown a
+                              -- -> IO (IDispatch ())
 
         , createDispInterface -- :: IUnknown iid        -- the interface to delegate to
-		              -- -> Either LIBID String -- libid of type library to use.
-		              -- -> IID iid      
-		                         -- what interface it implements (needed to
-			                 -- get at the type library which drives
-			                 -- the dispatch interface.)
-		              -- -> IO (IDispatch ()) 
-			                 -- the dispatch implementation handed back.
+                              -- -> Either LIBID String -- libid of type library to use.
+                              -- -> IID iid      
+                                         -- what interface it implements (needed to
+                                         -- get at the type library which drives
+                                         -- the dispatch interface.)
+                              -- -> IO (IDispatch ()) 
+                                         -- the dispatch implementation handed back.
 
-	, VTable
-	, ComVTable
-	, PrimIP
+        , VTable
+        , ComVTable
+        , PrimIP
 
-	, ComInterface
-	, mkIface
-	, mkDispIface
-	, mkDualIface
-	
-	, export_getTypeInfoCount
-	, export_getTypeInfo
-	, export_getIDsOfNames
-	, export_invoke
-	) where
+        , ComInterface
+        , mkIface
+        , mkDispIface
+        , mkDualIface
+        
+        , export_getTypeInfoCount
+        , export_getTypeInfo
+        , export_getIDsOfNames
+        , export_invoke
+        ) where
 
 import System.Win32.Com.HDirect.HDirect
 import Data.Word
@@ -107,19 +107,19 @@ import Data.List
 --by the abstraction levels above us.
 
 type PrimIP iid   = Ptr (Ptr ())
-type VTBL	  = (Ptr (Ptr ()), Int)
+type VTBL         = (Ptr (Ptr ()), Int)
 type VTable    iid objState = VTBL
 type ComVTable iid objState = VTable iid (objState, IUnkState)
 
 data ComInterface objState 
   = Iface     { ifaceGUID :: GUID
               , ifaceVTBL  :: VTBL
-	      }
+              }
   | DispIface { ifaceGUID  :: GUID
-	      , ifaceLIBID :: Either LIBID String
-	      , ifaceVTBL  :: VTBL
-	      , isDual     :: Bool
-	      }
+              , ifaceLIBID :: Either LIBID String
+              , ifaceVTBL  :: VTBL
+              , isDual     :: Bool
+              }
 
 mkIface :: IID iid -> VTable iid objState -> ComInterface objState
 mkIface iid a = Iface (iidToGUID iid) a
@@ -144,15 +144,15 @@ that it returns is at the one requested.
 -}
 
 createComInstance :: String                   -- DLL path.
-                  -> objState		      -- initial state
-		  -> IO ()                    -- action to perform when releasing object.
-	          -> [ComInterface objState]  -- supported interfaces
-	          -> IID (IUnknown iid)
-	          -> IO (IUnknown iid)
+                  -> objState                 -- initial state
+                  -> IO ()                    -- action to perform when releasing object.
+                  -> [ComInterface objState]  -- supported interfaces
+                  -> IID (IUnknown iid)
+                  -> IO (IUnknown iid)
 createComInstance dll_path initState releaseAction supported_ifaces initial_iid = do
   ip_state  <- mkInstanceState supported_ifaces dll_path releaseAction initState
   (_,iu)    <- deRefStablePtr  ip_state
-  res	    <- lookupInterface initial_iid (iu_ifaces iu)
+  res       <- lookupInterface initial_iid (iu_ifaces iu)
   case res of
     (_,_,ip) -> do
 --       putMessage ("createComInstance: " ++ show initial_iid)
@@ -175,8 +175,8 @@ also contains enough information for the <tt/IUnknown/ methods
 to operate correctly.
 -}
 createIPointer :: StablePtr a
-	       -> VTBL
-	       -> IO (IUnknown b)
+               -> VTBL
+               -> IO (IUnknown b)
 createIPointer iface_st (vtbl,_) = do
    pre   <- alloc (sizeofIfaceHeader)
    poke pre vtbl
@@ -205,19 +205,19 @@ cloneIPointer_prim iptr vtbl = do
 -- and 'queryInterface' to check whether the component
 -- implements a particular interface.
 findInterface :: IUnkIfaceInfo
-	      -> Ptr GUID
-	      -> Ptr (Ptr (IUnknown b))
-	      -> IO HRESULT
+              -> Ptr GUID
+              -> Ptr (Ptr (IUnknown b))
+              -> IO HRESULT
 findInterface ls piid ppv = do
-    iid		 <- unmarshallGUID False piid
+    iid          <- unmarshallGUID False piid
     if (iid == iidToGUID iidIUnknown) then 
       case ls of
-        []	      -> return e_NOINTERFACE
-	((_,_,ip):_)  -> realiseIPointer ip
+        []            -> return e_NOINTERFACE
+        ((_,_,ip):_)  -> realiseIPointer ip
      else if (iid == iidToGUID iidIDispatch) then
       case filter (isIDispatch) ls of
-         []	      -> return e_NOINTERFACE
-	 ((_,_,ip):_) -> realiseIPointer ip
+         []           -> return e_NOINTERFACE
+         ((_,_,ip):_) -> realiseIPointer ip
 
      else
       let
@@ -249,8 +249,8 @@ findInterface ls piid ppv = do
    isIDispatch (iid, flg, _) = flg || iid == iidToGUID iidIDispatch
 
 lookupInterface :: IID iid 
-		-> IUnkIfaceInfo -- [(GUID, Bool, IUnknown ())]
-		-> IO (GUID, Bool, IUnknown ())
+                -> IUnkIfaceInfo -- [(GUID, Bool, IUnknown ())]
+                -> IO (GUID, Bool, IUnknown ())
 lookupInterface iid []       = ioError (userError "lookupInterface: interface not supported")
 lookupInterface iid ls@(i:_) =
   case (find (\ (i,_,_) -> i == guid) ls) of
@@ -270,9 +270,9 @@ type IUnkIfaceInfo = [(GUID, Bool, IUnknown ())]
 
 mkInstanceState :: [ComInterface objState] 
                 -> String
-		-> IO ()
+                -> IO ()
                 -> objState
-		-> IO (StablePtr (objState, IUnkState))
+                -> IO (StablePtr (objState, IUnkState))
 mkInstanceState iface_list dll_path releaseAction objState = do
   fixIO (\ stbl_st -> do
      ref_cnt <- newIORef 1
@@ -285,16 +285,16 @@ mkInstanceState iface_list dll_path releaseAction objState = do
      (iid, False, unsafePerformIO (createIPointer st vtbl))
   mkIf st (DispIface guid libid vtbl is_dual) =
      (guid, True, unsafePerformIO $ do 
-		    let iid     = guidToIID guid
-		        lib_loc = 
-			  case libid of
-			    Right "" -> Right dll_path
-			    _        -> libid
-		    if is_dual then 
-		       createDualInterface st vtbl lib_loc iid
-		     else do
-   		       ip <- createIPointer st vtbl
-		       createDispInterface ip lib_loc iid
+                    let iid     = guidToIID guid
+                        lib_loc = 
+                          case libid of
+                            Right "" -> Right dll_path
+                            _        -> libid
+                    if is_dual then 
+                       createDualInterface st vtbl lib_loc iid
+                     else do
+                       ip <- createIPointer st vtbl
+                       createDispInterface ip lib_loc iid
      )
 
 {-
@@ -309,11 +309,11 @@ the form :
 instance.)
 -}
 queryInterface :: Ptr (IUnknown a)
-	       -> Ptr GUID
-	       -> Ptr (Ptr (IUnknown b))
-	       -> IO HRESULT
+               -> Ptr GUID
+               -> Ptr (Ptr (IUnknown b))
+               -> IO HRESULT
 queryInterface iptr riid ppvObject = do
-  iid		 <- unmarshallGUID False riid
+  iid            <- unmarshallGUID False riid
 --  putMessage ("qi: " ++ show (iptr,iid))
   if_ls <- getSupportedInterfaces iptr
   hr    <- findInterface if_ls riid ppvObject
@@ -408,30 +408,30 @@ getIPointerState_stbl iptr = peek (iptr `plusPtr` fromIntegral sizeofPtr)
 --Dispatch interface support:
 
 createDualInterface :: StablePtr objState
-		    -> ComVTable (IUnknown iid) objState
-		    -> Either LIBID String
-		    -> IID (IUnknown iid)
-		    -> IO (IUnknown iid)
+                    -> ComVTable (IUnknown iid) objState
+                    -> Either LIBID String
+                    -> IID (IUnknown iid)
+                    -> IO (IUnknown iid)
 createDualInterface ip_state vtbl libid iid = do
     ip     <- createIPointer ip_state vtbl
     st     <- mkDispatchState libid ip iid
     meths  <- unmarshallVTable vtbl
     let real_meths = 
-	    case meths of
-	      (qi : ar : re : ls) -> ls
-	      _			  -> error "createDualInterface: failed to strip of IU methods"
+            case meths of
+              (qi : ar : re : ls) -> ls
+              _                   -> error "createDualInterface: failed to strip of IU methods"
     vtable <- createDispVTable real_meths st 
     cloneIPointer ip vtable
 
 createDispInterface :: IUnknown iid   -- the interface to delegate to
-		    -> Either LIBID String
-			   -- libid of type library to use / path to where the .tlb is stored.
-		    -> IID (IUnknown iid)
-		           -- what interface it implements (needed to
-			   -- get at the type library which drives
-			   -- the dispatch interface.)
-		    -> IO (IUnknown iid)
-			   -- the dispatch implementation handed back.
+                    -> Either LIBID String
+                           -- libid of type library to use / path to where the .tlb is stored.
+                    -> IID (IUnknown iid)
+                           -- what interface it implements (needed to
+                           -- get at the type library which drives
+                           -- the dispatch interface.)
+                    -> IO (IUnknown iid)
+                           -- the dispatch implementation handed back.
 createDispInterface ip libid iid = do
 --    putMessage ("createDispInterface: " ++ show (libid, iid))
     st     <- mkDispatchState libid ip iid
@@ -443,9 +443,9 @@ createDispInterface ip libid iid = do
     return i
 
 mkDispatchState :: Either LIBID String
-		-> IUnknown iid
-		-> IID (IUnknown iid)
-		-> IO DispState
+                -> IUnknown iid
+                -> IID (IUnknown iid)
+                -> IO DispState
 mkDispatchState libid ip iid = do
    pTInfo_ref <- newIORef nullPtr
    return (DispState libid (coerceIID iid) (coerceIP ip) pTInfo_ref)
@@ -469,18 +469,18 @@ type DISPPARAMS = Ptr () -- abstract, really.
 type EXCEPINFO  = Ptr () -- abstract, really.
 
 createDispVTable :: [Ptr ()] 
-	         -> DispState
-		 -> IO (ComVTable (IDispatch ()) DispState)
+                 -> DispState
+                 -> IO (ComVTable (IDispatch ()) DispState)
 createDispVTable meths disp_st = do
   a_getTypeInfoCount <- export_getTypeInfoCount getTypeInfoCount
-  a_getTypeInfo	     <- export_getTypeInfo      (getTypeInfo disp_st)
-  a_getIDsOfNames    <- export_getIDsOfNames	(getIDsOfNames disp_st)
-  a_invoke	     <- export_invoke		(invoke disp_st)
+  a_getTypeInfo      <- export_getTypeInfo      (getTypeInfo disp_st)
+  a_getIDsOfNames    <- export_getIDsOfNames    (getIDsOfNames disp_st)
+  a_invoke           <- export_invoke           (invoke disp_st)
   createComVTable ([ a_getTypeInfoCount
-		   , a_getTypeInfo
-		   , a_getIDsOfNames
-		   , a_invoke
-		   ] ++ meths)
+                   , a_getTypeInfo
+                   , a_getIDsOfNames
+                   , a_invoke
+                   ] ++ meths)
 
 getTypeInfoCount :: Ptr () -> Ptr Word32 -> IO HRESULT
 getTypeInfoCount iptr pctInfo = do
@@ -489,13 +489,13 @@ getTypeInfoCount iptr pctInfo = do
   return s_OK
 
 foreign import stdcall "wrapper" export_getTypeInfoCount
-	    :: (Ptr () -> Ptr Word32 -> IO HRESULT) -> IO (Ptr ())
+            :: (Ptr () -> Ptr Word32 -> IO HRESULT) -> IO (Ptr ())
 
 getTypeInfo :: DispState -> Ptr (IDispatch ()) -> Word32 -> LCID -> Ptr () -> IO HRESULT
 getTypeInfo disp_state this iTInfo lcid ppTInfo
   | iTInfo /= 0         = return tYPE_E_ELEMENTNOTFOUND
   | ppTInfo == nullPtr  = return e_POINTER
-  | otherwise		= do
+  | otherwise           = do
 --  putMessage "getTypeInfo"
   poke (castPtr ppTInfo) nullPtr
   let ppITInfo_ref = disp_ti disp_state
@@ -537,31 +537,31 @@ getTypeInfo disp_state this iTInfo lcid ppTInfo
 -- Loading the type info is lcid sensitive, so we
 -- have to manually invoke this from within GetTypeInfo()
 loadTypeInfo :: Either LIBID String
-	     -> IID iid
-	     -> LCID
-	     -> Ptr (PrimIP (ITypeInfo ()))
-	     -> IO HRESULT
+             -> IID iid
+             -> LCID
+             -> Ptr (PrimIP (ITypeInfo ()))
+             -> IO HRESULT
 loadTypeInfo tlb_loc iid lcid ppITI = do
    (hr, pITypeLib) <- 
     catchComException
      (case tlb_loc of
         Left libid -> do
-	   ip <- loadRegTypeLib libid 1 0 (fromIntegral (primLangID lcid))
-	   return (s_OK, ip)
-	  -- load it in silently
+           ip <- loadRegTypeLib libid 1 0 (fromIntegral (primLangID lcid))
+           return (s_OK, ip)
+          -- load it in silently
         Right path -> do
            ip <- loadTypeLibEx path False{-don't register-}
-	   return (s_OK, ip))
+           return (s_OK, ip))
      (\ ex -> do
-     	 putMessage "Failed to load typelib"
+         putMessage "Failed to load typelib"
          return (fromMaybe e_FAIL (coGetErrorHR ex), interfaceNULL))
    if (failed hr) then
       return hr
     else do
       hr <- pITypeLib # getTypeInfoOfGuid iid ppITI
         -- pITypeLib is a finalised i-pointer, and will be
-	-- released in due course.
-	-- NOTE: potential bug farm.
+        -- released in due course.
+        -- NOTE: potential bug farm.
       return hr
 
 -- from oleauto.h
@@ -569,16 +569,16 @@ foreign import ccall "primLoadRegTypeLib"
   primLoadRegTypeLib :: Ptr () -> Word16 -> Word16 -> Word32 -> Ptr () -> IO HRESULT
 
 foreign import stdcall "wrapper" export_getTypeInfo
-	    :: (Ptr (IDispatch ()) -> Word32 -> LCID -> Ptr () -> IO HRESULT) -> IO (Ptr ())
+            :: (Ptr (IDispatch ()) -> Word32 -> LCID -> Ptr () -> IO HRESULT) -> IO (Ptr ())
 
 getIDsOfNames :: DispState
-	      -> Ptr (IDispatch ())
-	      -> Ptr (IID ())
-	      -> Ptr WideString
-	      -> Word32
-	      -> LCID
-	      -> Ptr DISPID
-	      -> IO HRESULT
+              -> Ptr (IDispatch ())
+              -> Ptr (IID ())
+              -> Ptr WideString
+              -> Word32
+              -> LCID
+              -> Ptr DISPID
+              -> IO HRESULT
 getIDsOfNames disp_state this riid rgszNames cNames lcid rgDispID = do
 --    putMessage ("getIDs: " ++ show cNames)
     pti      <- allocOutPtr
@@ -594,7 +594,7 @@ getIDsOfNames disp_state this riid rgszNames cNames lcid rgDispID = do
        return hr
 
 foreign import stdcall "wrapper" export_getIDsOfNames
-	    :: (Ptr (IDispatch ()) -> Ptr (IID ()) -> Ptr WideString -> Word32 -> LCID -> Ptr DISPID -> IO HRESULT) -> IO (Ptr ())
+            :: (Ptr (IDispatch ()) -> Ptr (IID ()) -> Ptr WideString -> Word32 -> LCID -> Ptr DISPID -> IO HRESULT) -> IO (Ptr ())
 
 invoke :: DispState
        -> Ptr (IDispatch ())
@@ -621,24 +621,24 @@ invoke disp_state this dispIdMember riid lcid wFlags pDispParams pVarResult pExc
        else do
         prim_ti  <- peek (castPtr pti)
         let ip = disp_ip disp_state
-	  -- hand over to the typelib marshaller, but making sure that
-	  -- any exceptions within the user code will be handled correctly.
+          -- hand over to the typelib marshaller, but making sure that
+          -- any exceptions within the user code will be handled correctly.
         clearException
         hr <- prim_ti # invokeTI ip dispIdMember wFlags pDispParams pVarResult pExcepInfo puArgErr
         fillException pExcepInfo lcid
-	ip <- unmarshallIUnknown False prim_ti
-	ip # Com.release
+        ip <- unmarshallIUnknown False prim_ti
+        ip # Com.release
         return hr
 
 invokeTI :: IUnknown a
-	 -> DISPID
-	 -> Word32
-	 -> Ptr DISPPARAMS
-	 -> Ptr VARIANT
-	 -> Ptr EXCEPINFO
-	 -> Ptr Word32
-	 -> Ptr (ITypeInfo a)
-	 -> IO HRESULT
+         -> DISPID
+         -> Word32
+         -> Ptr DISPPARAMS
+         -> Ptr VARIANT
+         -> Ptr EXCEPINFO
+         -> Ptr Word32
+         -> Ptr (ITypeInfo a)
+         -> IO HRESULT
 invokeTI ip dispIdMember wFlags pDispParams pVarResult pExcepInfo puArgErr this = do
   iptr_fo <- marshallIUnknown ip
   let offset    = (11::Int)
@@ -658,14 +658,14 @@ getTypeInfoOfGuid iid ppITI this = do
   let a = foreignPtrToPtr pthis
   lpVtbl  <- peek (castPtr a)
   methPtr <- indexPtr lpVtbl offset
-  piid	  <- marshallIID iid
+  piid    <- marshallIID iid
   withForeignPtr pthis $ \ pthis -> 
    withForeignPtr piid  $ \ piid -> 
     prim_getTypeInfoOfGuid methPtr pthis piid ppITI
 
 foreign import stdcall "dynamic"
   prim_getTypeInfoOfGuid :: Ptr () -> Ptr (Ptr a)
-  			 -> Ptr (IID iid) -> Ptr (PrimIP (ITypeInfo ())) -> IO HRESULT
+                         -> Ptr (IID iid) -> Ptr (PrimIP (ITypeInfo ())) -> IO HRESULT
 
 getIDsOfNamesTI :: Ptr WideString -> Word32 -> Ptr DISPID -> Ptr (ITypeInfo ()) -> IO HRESULT
 getIDsOfNamesTI rgszNames cNames rgDispID this = do
@@ -681,10 +681,10 @@ clearException :: IO ()
 clearException = return ()
 
 fillException :: Ptr EXCEPINFO
-	      -> LCID
-	      -> IO ()
+              -> LCID
+              -> IO ()
 fillException _ _ = return ()
-	      
+              
 
 foreign import stdcall "wrapper" export_invoke
    :: (Ptr (IDispatch ()) -> DISPID -> Ptr (IID a) -> LCID -> Word32 -> Ptr DISPPARAMS

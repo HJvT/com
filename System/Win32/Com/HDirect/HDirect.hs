@@ -14,31 +14,31 @@
 -- 
 -----------------------------------------------------------------------------
 module System.Win32.Com.HDirect.HDirect 
-	(
-	  module System.Win32.Com.HDirect.HDirect
+        (
+          module System.Win32.Com.HDirect.HDirect
 
-	, Int8
-	, Int16
-	, Int32
-	, Int64
+        , Int8
+        , Int16
+        , Int32
+        , Int64
 
-	, Word8
-	, Word16
-	, Word32
-	, Word64
+        , Word8
+        , Word16
+        , Word32
+        , Word64
 
-	, Char
-	, Double
-	, Float
-	, Bool
-	
-	, Ptr
+        , Char
+        , Double
+        , Float
+        , Bool
+        
+        , Ptr
 
-	, StablePtr
-	, deRefStablePtr
-	, free
-	
-	) where
+        , StablePtr
+        , deRefStablePtr
+        , free
+        
+        ) where
 
 import Data.Char
 import Data.Int  ( Int8, Int16, Int32, Int64 )
@@ -51,6 +51,7 @@ import System.IO.Unsafe ( unsafePerformIO )
 import Foreign.StablePtr
 import Foreign.Storable
 import Foreign.ForeignPtr
+import Foreign.ForeignPtr.Unsafe
 import Foreign.Ptr
 import Foreign.C.Types ( CChar )
 import Foreign.C.String
@@ -66,7 +67,7 @@ getTag :: a -> Int#
 getTag x = dataToTag# x
 {- WAS: x `seq` dataToTag# x
         this won't work 
-	  (seq's type is a->b->b, where b isn't 'open',
+          (seq's type is a->b->b, where b isn't 'open',
            but has to be of kind *)
 -}
 #endif
@@ -457,8 +458,8 @@ writefptr p v = poke (castPtr p) (foreignPtrToPtr v)
 
 marshallunique :: (IO (Ptr a))
                -> (Ptr a -> a -> IO ())
-	       -> Maybe a
-	       -> IO (Ptr a)
+               -> Maybe a
+               -> IO (Ptr a)
 marshallunique allocRef marshallInto mb = 
   case mb of
     Nothing -> return nullPtr
@@ -470,8 +471,8 @@ marshallMaybe mshall  _def (Just x) = mshall x
 
 writeMaybe :: (Ptr a -> a -> IO ())
            -> Ptr (Maybe a)
-	   -> Maybe a
-	   -> IO ()
+           -> Maybe a
+           -> IO ()
 writeMaybe _  ptr Nothing  = writePtr (castPtr ptr) nullPtr
 writeMaybe wr ptr (Just x) = wr (castPtr ptr) x
 
@@ -481,10 +482,10 @@ readMaybe rd ptr
  | otherwise      = rd ptr >>= return . Just
 
 writeunique :: IO (Ptr a)
-	    -> (Ptr a -> a -> IO ())
-	    -> Ptr (Maybe a)
-	    -> Maybe a
-	    -> IO ()
+            -> (Ptr a -> a -> IO ())
+            -> Ptr (Maybe a)
+            -> Maybe a
+            -> IO ()
 writeunique allocRef marshallInto p mb =
   case mb of
     Nothing  -> writePtr (castPtr p) nullPtr
@@ -493,10 +494,10 @@ writeunique allocRef marshallInto p mb =
 -- used to handle unique function pointers, since their marshallers
 -- have a non-standard type (cf. 2nd arg.)
 writeunique_fun :: IO (Ptr a)
-	        -> (Ptr (Ptr a) -> a -> IO ())
- 	        -> Ptr (Maybe a)
-	        -> Maybe a
-	        -> IO ()
+                -> (Ptr (Ptr a) -> a -> IO ())
+                -> Ptr (Maybe a)
+                -> Maybe a
+                -> IO ()
 writeunique_fun allocRef marshallInto p mb =
   case mb of
     Nothing  -> writePtr (castPtr p) nullPtr
@@ -608,9 +609,9 @@ readEnum16 p = do
   return (toEnum (fromIntegral x))
 
 marshalllist :: Word32
-	     -> (Ptr a -> a -> IO ())
-	     -> [a]
-	     -> IO (Ptr b)
+             -> (Ptr a -> a -> IO ())
+             -> [a]
+             -> IO (Ptr b)
 marshalllist szof writeelt ls = do
  arr <- alloc (len*szof)
  foldM writeElt (castPtr arr) ls
@@ -646,8 +647,8 @@ writelist do_alloc szof writeelt pptr ls = do
  the_ptr <- 
     (if do_alloc then do
         ptr <- alloc (szof * fromIntegral len)
-	writePtr (castPtr pptr) ptr
-	return (castPtr ptr)
+        writePtr (castPtr pptr) ptr
+        return (castPtr ptr)
       else
         return (castPtr pptr))
  foldM writeElt the_ptr ls
@@ -673,8 +674,8 @@ readlist szof len unpack ptr = do
 
 freelist :: Word32 -> Word32 -> (Ptr a -> IO ()) -> Ptr [a] -> IO ()
 freelist szof len free_elt ptr = do
-	go (castPtr ptr) len
-	free ptr
+        go (castPtr ptr) len
+        free ptr
   where
     go _pptr 0 = return ()
     go pptr  x = do
@@ -714,7 +715,7 @@ marshallBString len str = do
 unmarshallString :: Ptr String -> IO String
 unmarshallString ptr
  | ptr == nullPtr  = return ""
- | otherwise	   = do
+ | otherwise       = do
    let ptr0 = addNCastPtr ptr 0
    loop ptr0
   where
@@ -731,7 +732,7 @@ unmarshallString ptr
 unmarshallBString :: Int -> Ptr String -> IO String
 unmarshallBString len ptr
  | ptr == nullPtr  = return ""
- | otherwise	   = do
+ | otherwise       = do
    let ptr0 = addNCastPtr ptr 0
    loop ptr0 0
   where
@@ -793,11 +794,11 @@ freeString = free
 --Sequence marshallers - i.e., R/W a sequence of values to/from a list.
 
 marshallSequence :: (Ptr a -> a -> IO ())
-		 -> (Ptr a -> IO ())
-		 -> Word32
-		 -> Maybe Word32
-		 -> [a]
-		 -> IO (Ptr a)
+                 -> (Ptr a -> IO ())
+                 -> Word32
+                 -> Maybe Word32
+                 -> [a]
+                 -> IO (Ptr a)
 marshallSequence wElt wTermin szElt mbLen ls = do
    pseq  <- alloc (len*szElt) -- assume that the sequence is packed without gaps.
    pseq' <- foldM writeElt pseq the_ls
@@ -807,22 +808,22 @@ marshallSequence wElt wTermin szElt mbLen ls = do
     (len, the_ls) = 
       case mbLen of
         Nothing -> (fromIntegral (length ls + 1), ls)
-	Just x  -> (x + 1, take (fromIntegral x) ls)
+        Just x  -> (x + 1, take (fromIntegral x) ls)
 
     writeElt addr v = do
       wElt addr v
       return (addNCastPtr addr szElt)
 
 unmarshallSequence :: ( Eq a )
-		   => (Ptr (Ptr a) -> IO a)
-		   -> (Ptr (Ptr a) -> IO Bool)
-		   -> Word32
-		   -> Maybe Word32
-		   -> Ptr (Ptr a)
-		   -> IO [a]
+                   => (Ptr (Ptr a) -> IO a)
+                   -> (Ptr (Ptr a) -> IO Bool)
+                   -> Word32
+                   -> Maybe Word32
+                   -> Ptr (Ptr a)
+                   -> IO [a]
 unmarshallSequence rElt termPred szElt mbLen ptr
  | ptr == nullPtr  = return []
- | otherwise	   = do
+ | otherwise       = do
    let ptr0 = addNCastPtr ptr 0
    loop 0 ptr0
   where
@@ -842,25 +843,25 @@ unmarshallSequence rElt termPred szElt mbLen ptr
        return (v:vs)
 
 readSequence :: ( Eq a )
-	     => (Ptr (Ptr a) -> IO a)
-	     -> (Ptr (Ptr a) -> IO Bool)
-	     -> Word32
-	     -> Maybe Word32
-	     -> Ptr (Ptr a)
-	     -> IO [a]
+             => (Ptr (Ptr a) -> IO a)
+             -> (Ptr (Ptr a) -> IO Bool)
+             -> Word32
+             -> Maybe Word32
+             -> Ptr (Ptr a)
+             -> IO [a]
 readSequence rElt termPred szElt mbLen ptr = do
   ptr' <- readPtr ptr
   unmarshallSequence rElt termPred szElt mbLen (castPtr ptr')
 
 writeSequence :: ( Eq a )
-	      => Bool
-	      -> (Ptr a -> a -> IO ())
-	      -> (Ptr a -> IO ())
-	      -> Word32
-	      -> Maybe Word32
-	      -> Ptr a 
-	      -> [a] 
-	      -> IO ()
+              => Bool
+              -> (Ptr a -> a -> IO ())
+              -> (Ptr a -> IO ())
+              -> Word32
+              -> Maybe Word32
+              -> Ptr a 
+              -> [a] 
+              -> IO ()
 writeSequence do_alloc wElt wTermin szElt mbLen ppseq ls = do
   pseq <-
     if not do_alloc then
@@ -875,7 +876,7 @@ writeSequence do_alloc wElt wTermin szElt mbLen ppseq ls = do
    (seq_len, the_ls) = 
       case mbLen of
         Nothing -> (fromIntegral (length ls + 1), ls)
-	Just x  -> (x + 1, take (fromIntegral x) ls)
+        Just x  -> (x + 1, take (fromIntegral x) ls)
 
    writeElt addr v = do
      wElt addr v
@@ -1034,7 +1035,7 @@ stackStringLen :: Int -> String -> (Ptr String -> IO a) -> IO a
 stackStringLen len str f
       = let slen = length str + 1 `max` len
         in stackFrame (fromIntegral slen) $ \pstr -> do 
-	 writeString False pstr str
+         writeString False pstr str
          f pstr
 
 enumToFlag :: Enum a => a -> Int
