@@ -6,7 +6,7 @@ Description:
    packaging up your Haskell code behind a COM-callable veneer.
    .
    Some examples of how to use the package can be found at <http://haskell.forkio.com/com-examples>
-Cabal-version: >= 1.2
+Cabal-version: >= 1.18
 build-type: Simple
 Maintainer: Sigbjorn Finne <sigbjorn.finne@gmail.com>
 License: BSD3

@@ -23,16 +23,16 @@
 -- 
 -----------------------------------------------------------------------------
 module System.Win32.Com.Server.ConnectionPoint 
-		(
-		  mkConnectionContainer
-		) where
+                (
+                  mkConnectionContainer
+                ) where
 
 import System.Win32.Com.Server
 import System.Win32.Com.Automation.Connection ( iidIConnectionPointContainer, iidIConnectionPoint,
-		    IConnectionPointContainer, IConnectionPoint,
-		    iidIEnumConnections, iidIEnumConnectionPoints
-		  )
-		    
+                    IConnectionPointContainer, IConnectionPoint,
+                    iidIEnumConnections, iidIEnumConnectionPoints
+                  )
+                    
 import System.Win32.Com
 import System.Win32.Com.HDirect.HDirect ( writeWord32, Ptr, sizeofPtr )
 import System.Win32.Com.Server.EnumInterface ( mkEnumInterface )
@@ -57,7 +57,7 @@ mkConnectionContainer ls = fixIO $ \ ip -> do
   vtbl       <- createComVTable [ addrOf_eCP, addrOf_fCP ]
   createComInstance "" () (return ())
                     [mkIface iidIConnectionPointContainer vtbl]
-		    iidIConnectionPointContainer
+                    iidIConnectionPointContainer
   
 mkConnection :: IConnectionPointContainer ()
              -> (IID (IUnknown ()), IORef [(Word32, IUnknown ())])
@@ -66,11 +66,11 @@ mkConnection ip (iid, regd_sinks) = do
   vtbl <- mkConnectionPointVTBL ip iid regd_sinks
   ip   <- createComInstance "" () (return ())
                             [ mkIface iidIConnectionPoint vtbl ]
-			    iidIConnectionPoint
+                            iidIConnectionPoint
   return (iid, ip)
 
 mkConnectionPointVTBL :: IConnectionPointContainer ()
-		      -> IID (IUnknown iid)
+                      -> IID (IUnknown iid)
                       -> IORef [(Word32, IUnknown ())]
                       -> IO (ComVTable (IConnectionPoint a) objState)
 mkConnectionPointVTBL ip iid sinks = do
@@ -85,8 +85,8 @@ mkConnectionPointVTBL ip iid sinks = do
 
 getConnectionInterface :: IID iid
                        -> ThisPtr
-		       -> Ptr GUID
-		       -> IO HRESULT
+                       -> Ptr GUID
+                       -> IO HRESULT
 getConnectionInterface iid _ piid 
   | piid == nullPtr  = return e_POINTER
   | otherwise        = do
@@ -141,8 +141,8 @@ unadvise sinks this dwCookie = do
   case break ((==dwCookie).fst) ls of
     (ls,[])    -> return cONNECT_E_NOCONNECTION
     (ls, _:rs) -> do
-	 -- just drop the interface pointer and let
-	 -- the GC release it.
+         -- just drop the interface pointer and let
+         -- the GC release it.
        writeIORef sinks (ls++rs)
        return s_OK
 
@@ -151,7 +151,7 @@ foreign import stdcall "wrapper"
 
 enumConnections :: IORef [(Word32,IUnknown ())]
                 -> ThisPtr
-	        -> Ptr (Ptr (IUnknown a))
+                -> Ptr (Ptr (IUnknown a))
                 -> IO HRESULT
 enumConnections sinks this ppCP
   | ppCP == nullPtr  = return e_POINTER
@@ -159,8 +159,8 @@ enumConnections sinks this ppCP
     ls   <- readIORef sinks
     vtbl <- mkEnumInterface (map snd ls) (fromIntegral sizeofPtr) (writeIUnknown True)
     ip   <- createComInstance "" () (return ())
-	                      [mkIface iidIEnumConnections vtbl]
-			      iidIEnumConnections
+                              [mkIface iidIEnumConnections vtbl]
+                              iidIEnumConnections
     writeIUnknown True ppCP ip
     return s_OK
 
@@ -173,11 +173,11 @@ enumConnectionPoints :: [IConnectionPoint ()]
                      -> IO HRESULT
 enumConnectionPoints ls this ppEnum 
   | ppEnum == nullPtr  = return e_POINTER
-  | otherwise	       = do
+  | otherwise          = do
      vtbl <- mkEnumInterface ls (fromIntegral sizeofPtr) (writeIUnknown True)
      ip   <- createComInstance "" () (return ())
-	                           [mkIface iidIEnumConnectionPoints vtbl]
-				   iidIEnumConnectionPoints
+                                   [mkIface iidIEnumConnectionPoints vtbl]
+                                   iidIEnumConnectionPoints
      writeIUnknown True ppEnum ip
      return s_OK
 
@@ -185,10 +185,10 @@ foreign import stdcall "wrapper"
     export_eCP :: (ThisPtr -> Ptr (Ptr (IUnknown b)) -> IO HRESULT) -> IO (Ptr ())
 
 findConnectionPoint :: [(IID (IUnknown ()), IConnectionPoint ())]
-		    -> ThisPtr
-		    -> Ptr GUID
-		    -> Ptr (Ptr (IUnknown ()))
-		    -> IO HRESULT
+                    -> ThisPtr
+                    -> Ptr GUID
+                    -> Ptr (Ptr (IUnknown ()))
+                    -> IO HRESULT
 findConnectionPoint ls this riid ppCP 
   | ppCP == nullPtr  = return e_POINTER
   | otherwise        = do
@@ -200,7 +200,7 @@ findConnectionPoint ls this riid ppCP
           return cONNECT_E_NOCONNECTION
        Just i  -> do
           writeIUnknown True ppCP i
-	  return s_OK
+          return s_OK
 
 foreign import stdcall "wrapper"
     export_fCP :: (ThisPtr -> Ptr GUID -> Ptr (Ptr (IUnknown b)) -> IO HRESULT) -> IO (Ptr ())

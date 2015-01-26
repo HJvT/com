@@ -21,7 +21,7 @@ typedef struct IComDll {
    HRESULT (*dllRegisterServer)();
    HRESULT (*dllUnregisterServer)();
    HRESULT (*dllGetClassObject)(CLSID* clsid, IID* iid,
-			        void** ppv);
+                                void** ppv);
 } ComDll;
 
 ComDll* comDll = NULL;
@@ -50,16 +50,16 @@ DllMain
   if (reason == DLL_PROCESS_ATTACH) {
       /* By now, the RTS DLL should have been hoisted in, but we need to start
          it up.
-	 
-	 Note: for ghc-4.08 and later, you need to give the main / 'root module'
-	 of the Haskell module you want to start running. So, if this is something 
-	 other than 'ComDllMain', you'll need to tweak the invocation below.
+         
+         Note: for ghc-4.08 and later, you need to give the main / 'root module'
+         of the Haskell module you want to start running. So, if this is something 
+         other than 'ComDllMain', you'll need to tweak the invocation below.
       */
 #if __GLASGOW_HASKELL__ >= 408
       startupHaskell( sizeof(args) / sizeof(char*)
-		    , args
-		    , &__stginit_ComDllMain
-		    );
+                    , args
+                    , &__stginit_ComDllMain
+                    );
 #else
       startupHaskell(sizeof(args) / sizeof(char*), args);
 #endif
@@ -68,9 +68,9 @@ DllMain
   } else {
     if (comDll && reason == DLL_PROCESS_DETACH) {
         (comDll)->dllUnload();
-	shutdownHaskell();
-	/* Not properly letting go of memory here is rude, but we're shutting down.. */
-	comDll=NULL;
+        shutdownHaskell();
+        /* Not properly letting go of memory here is rude, but we're shutting down.. */
+        comDll=NULL;
     }
     return TRUE;
   }
